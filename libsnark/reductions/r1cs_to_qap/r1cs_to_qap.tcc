@@ -107,6 +107,8 @@ qap_instance_evaluation<FieldT> r1cs_to_qap_instance_map_with_evaluation(const r
 {
     libff::enter_block("Call to r1cs_to_qap_instance_map_with_evaluation");
 
+    // NoteAdded: https://github.com/scipr-lab/libfqfft/blob/master/libfqfft/evaluation_domain/get_evaluation_domain.tcc
+    // This function returns the evaluation domain
     const std::shared_ptr<libfqfft::evaluation_domain<FieldT> > domain = libfqfft::get_evaluation_domain<FieldT>(cs.num_constraints() + cs.num_inputs() + 1);
 
     std::vector<FieldT> At, Bt, Ct, Ht;
@@ -116,6 +118,9 @@ qap_instance_evaluation<FieldT> r1cs_to_qap_instance_map_with_evaluation(const r
     Ct.resize(cs.num_variables()+1, FieldT::zero());
     Ht.reserve(domain->m+1);
 
+    // NoteAdded: https://github.com/scipr-lab/libfqfft/blob/master/libfqfft/evaluation_domain/evaluation_domain.hpp#L88
+    // This function compute the vanishing polynomial Z from the points in the domain
+    // and returns the evaluation of this polynomial in t (point in which all polynomials are evaluated)
     const FieldT Zt = domain->compute_vanishing_polynomial(t);
 
     libff::enter_block("Compute evaluations of A, B, C, H at t");

@@ -227,6 +227,11 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(const r1cs_gg_ppzksna
     const libff::Fr<ppT> delta_inverse = delta.inverse();
 
     /* A quadratic arithmetic program evaluated at t. */
+    //
+    // NoteAdded: The call to "r1cs_to_qap_instance_map_with_evaluation" will build
+    // the set of QAP polynomials from the R1CS (the vanishing/target polynomial) will be constructed
+    // from interpolation of a domain S, and the resulting polynomial will be evaluated in t which
+    // is the secret point on which we will query the polynomial to test if the QAP condition holds.
     qap_instance_evaluation<libff::Fr<ppT> > qap = r1cs_to_qap_instance_map_with_evaluation(r1cs_copy, t);
 
     libff::print_indent(); printf("* QAP number of variables: %zu\n", qap.num_variables());
@@ -251,6 +256,11 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(const r1cs_gg_ppzksna
     libff::leave_block("Compute query densities");
 
     /* qap.{At,Bt,Ct,Ht} are now in unspecified state, but we do not use them later */
+    // NoteAdded: At, Bt, Ct are vectors because, they represent the evaluations of the set of polynomials
+    // in the sets A, B and C (left, right and output) wires of the gates, at the point t.
+    //
+    // Later in this function, the At, Bt and Ct function evaluations will be encoded in the exponent
+    // of our group generators
     libff::Fr_vector<ppT> At = std::move(qap.At);
     libff::Fr_vector<ppT> Bt = std::move(qap.Bt);
     libff::Fr_vector<ppT> Ct = std::move(qap.Ct);
@@ -320,6 +330,8 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(const r1cs_gg_ppzksna
     libff::G1<ppT> delta_g1 = delta * g1_generator;
     libff::G2<ppT> delta_g2 = delta * G2_gen;
 
+    // NoteAdded: https://github.com/scipr-lab/libff/blob/master/libff/algebra/scalar_multiplication/multiexp.tcc#L615
+    // We exponentiate our queries and return vectors of group elements representing encoding of the queries
     libff::enter_block("Generate queries");
     libff::enter_block("Compute the A-query", false);
     libff::G1_vector<ppT> A_query = batch_exp(g1_scalar_size, g1_window_size, g1_table, At);
@@ -334,6 +346,7 @@ r1cs_gg_ppzksnark_keypair<ppT> r1cs_gg_ppzksnark_generator(const r1cs_gg_ppzksna
     // kc_batch_exp will convert its output to special form internally
     libff::leave_block("Compute the B-query", false);
 
+    // NoteAdded: https://github.com/scipr-lab/libff/blob/master/libff/algebra/scalar_multiplication/multiexp.tcc#L649
     libff::enter_block("Compute the H-query", false);
     libff::G1_vector<ppT> H_query = batch_exp_with_coeff(g1_scalar_size, g1_window_size, g1_table, qap.Zt * delta_inverse, Ht);
 #ifdef USE_MIXED_ADDITION

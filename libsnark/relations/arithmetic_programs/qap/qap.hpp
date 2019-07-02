@@ -104,6 +104,7 @@ private:
     size_t degree_;
     size_t num_inputs_;
 public:
+    // NoteAdded: The domain is a subset of the field and represent the domain on which we interpolated the R1CS to get the QAP
     std::shared_ptr<libfqfft::evaluation_domain<FieldT> > domain;
 
     FieldT t;
